@@ -1,13 +1,13 @@
 import * as Tabs from "@radix-ui/react-tabs"
 import { motion } from "framer-motion"
-import { Home, Star, Asterisk, Radar, User } from "lucide-react"
+import { House, Star, Asterisk, Target, User } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
 export const TABS = [
-  { id: "home", label: "Home", icon: Home, fill: true },
+  { id: "home", label: "Home", icon: House, fill: true },
   { id: "explore", label: "Explore", icon: Star },
   { id: "session", label: "Session", icon: Asterisk, center: true },
-  { id: "insights", label: "Insights", icon: Radar },
+  { id: "insights", label: "Insights", icon: Target },
   { id: "profile", label: "Profile", icon: User },
 ]
 const spring = { type: "spring", stiffness: 420, damping: 32 }
@@ -30,7 +30,7 @@ export default function Dock({ value, onChange }) {
                 <motion.span layoutId="dock-glow" transition={spring} className="absolute -inset-3 rounded-full bg-amber-300/10 blur-md" />
               )}
               <motion.span whileTap={{ scale: 0.88 }} className="relative grid place-items-center">
-                <Icon size={20} strokeWidth={center ? 2 : 1.5} fill={fill && on ? "currentColor" : "none"} />
+                <Icon size={20} weight={fill && on ? "fill" : "light"} />
               </motion.span>
               {on && center && (
                 <motion.span initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
