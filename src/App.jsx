@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Asterisk, Blend, ChevronRight, Lightbulb, MapPin, Play } from "lucide-react"
+import { Asterisk, Blend, ChevronRight, Lightbulb, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
 import Dock, { TABS } from "@/components/Dock"
@@ -20,9 +20,6 @@ function Header() {
         </div>
         <span className="font-serif text-[26px] font-medium italic tracking-[-0.01em]">Novum</span>
       </div>
-      <button className="flex h-8 items-center gap-1.5 rounded-full bg-white/15 px-3 text-xs text-white/90 outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-amber-300/70">
-        <MapPin size={14} strokeWidth={1.5} /> Toronto, Ontario
-      </button>
     </header>
   )
 }
