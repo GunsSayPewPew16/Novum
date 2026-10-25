@@ -18,7 +18,7 @@ function Header() {
         <div className="grid size-8 place-items-center rounded-full bg-white/15 shadow-[0_0_24px_rgba(255,170,90,.5)]">
           <Asterisk size={20} strokeWidth={2} />
         </div>
-        <span className="text-2xl font-medium tracking-[-0.02em]">Aivo</span>
+        <span className="font-serif text-[26px] font-medium italic tracking-[-0.01em]">Novum</span>
       </div>
       <button className="flex h-8 items-center gap-1.5 rounded-full bg-white/15 px-3 text-xs text-white/90 outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-amber-300/70">
         <MapPin size={14} strokeWidth={1.5} /> Toronto, Ontario
@@ -44,12 +44,9 @@ function Hero() {
         </motion.div>
       </div>
       <div className="absolute inset-x-6 bottom-6 flex flex-col items-center text-center">
-        <span className="inline-flex h-6 items-center gap-2 rounded-xl bg-white/[0.06] px-3 text-xs font-medium text-white/80">
-          <i className="size-1 rounded-full bg-white/80" /> Aivo recommendation
-        </span>
-        <h2 className="mt-2 text-2xl font-medium leading-7 tracking-[-0.01em]">Reset Your Mind</h2>
+        <h2 className="font-serif text-[28px] font-medium italic leading-8 tracking-[-0.01em]">Start A New Session</h2>
         <p className="mt-2 whitespace-nowrap text-xs leading-4 text-white/60">
-          A gentle guided session designed to release tension<br />and bring your attention back to the present.
+          Set a focus block and track your study time<br />to see how your sessions add up.
         </p>
         <div className="mt-2 flex gap-4">
           <Meta icon={Play}>10 min</Meta>
@@ -57,7 +54,7 @@ function Hero() {
         </div>
         <Button asChild className="mt-4 h-10 gap-2 px-6 text-[13px]">
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-            <Play size={14} strokeWidth={1.5} /> Play Now
+            <Play size={14} strokeWidth={1.5} /> Start Timer
           </motion.button>
         </Button>
       </div>

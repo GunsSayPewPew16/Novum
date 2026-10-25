@@ -1,3 +1,9 @@
+@font-face { font-family: "Neue Haas Grotesk"; src: url("/fonts/NeueHaasGrotText-55Roman-Trial.otf") format("opentype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Neue Haas Grotesk"; src: url("/fonts/NeueHaasGrotText-65Medium-Trial.otf") format("opentype"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Neue Haas Grotesk Display"; src: url("/fonts/NeueHaasGrotDisp-65Medium-Trial.otf") format("opentype"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Anthropic Serif"; src: url("/fonts/AnthropicSerif-Display-Medium-Static.otf") format("opentype"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Anthropic Serif"; src: url("/fonts/AnthropicSerif-Display-MediumItalic-Static.otf") format("opentype"); font-weight: 500; font-style: italic; font-display: swap; }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

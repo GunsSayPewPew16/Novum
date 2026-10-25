@@ -1,13 +1,10 @@
 import { useRef, useState } from "react"
-import { motion, useMotionValue, useMotionValueEvent, useSpring, useTransform, useVelocity } from "framer-motion"
+import { animate, motion, useMotionValue, useMotionValueEvent, useTransform } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const SPAN = 14 // days either side of today
-const STEP = 20 // degrees between neighbouring dates while the wheel is spinning
-const R = 200 // wheel radius (px) while spinning
-const PITCH = 64 // px between dates at rest
-const SPRING = { type: "spring", stiffness: 300, damping: 30 }
-const rad = (deg) => (deg * Math.PI) / 180
+const PITCH = 64 // px the row travels for one date
+const CURVE = 900 // radius (px) of the flat, gently curved row; large so the bend is slight
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
 // session progress rings for the last few days, keyed by offset from today
@@ -43,16 +40,13 @@ function Ring({ p, strong }) {
   )
 }
 
-// One date. `wheel` is the spring-driven (fractional) index at the centre and `k` (0-1) is how fast
-// the wheel is spinning: at rest the dates lie flat on a gentle arc, in motion they curve onto a
-// 3D dial and tilt away from the viewer.
-function WheelDate({ i, day, wheel, k, active, onSelect }) {
-  const d = useTransform(wheel, (v) => i - v)
-  const angle = useTransform(d, (v) => clamp(v * STEP, -90, 90))
-  const x = useTransform([d, k, angle], ([dv, kv, a]) => dv * PITCH * (1 - kv) + R * Math.sin(rad(a)) * kv)
-  const y = useTransform(d, (v) => 9.8 * (Math.sqrt(v * v + 0.02) - 0.1414))
-  const z = useTransform([k, angle], ([kv, a]) => -kv * R * (1 - Math.cos(rad(a))))
-  const rotateY = useTransform([k, angle], ([kv, a]) => a * kv)
+// One date. `x` is the shared scroll offset in px: each date derives its seat from it on every
+// frame, so the row follows the finger one-to-one. The row is flat in 2D, bent onto a large
+// circle: dates further from the centre sit slightly lower, and the bend is kept gentle.
+function WheelDate({ i, day, x, active, onSelect }) {
+  const d = useTransform(x, (v) => i + v / PITCH)
+  const px = useTransform(d, (v) => v * PITCH)
+  const y = useTransform(d, (v) => CURVE * (1 - Math.cos(v * PITCH / CURVE)))
   const scale = useTransform(d, (v) => {
     const a = Math.abs(v)
     return a < 1 ? 1.15 - 0.25 * a : Math.max(0.8, 0.9 - 0.04 * (a - 1))
@@ -66,7 +60,7 @@ function WheelDate({ i, day, wheel, k, active, onSelect }) {
 
   return (
     <motion.button tabIndex={-1} aria-hidden onClick={() => onSelect(i)}
-      style={{ x, y, z, rotateY, scale, opacity, pointerEvents }}
+      style={{ x: px, y, scale, opacity, pointerEvents }}
       className="absolute left-1/2 top-3 -ml-7 flex w-14 flex-col items-center gap-3 outline-none">
       <span className={cn("relative grid size-10 place-items-center rounded-full text-base font-medium transition-colors", p > 0.5 ? "bg-white/[0.06]" : "bg-white/[0.24]")}>
         {day.date}
@@ -80,43 +74,58 @@ function WheelDate({ i, day, wheel, k, active, onSelect }) {
 }
 
 export default function DateStrip() {
-  const target = useMotionValue(SPAN) // where the wheel should land
-  const wheel = useSpring(target, SPRING) // what is drawn: spring-chased rotation
-  const k = useSpring(useTransform(useVelocity(wheel), (v) => clamp(Math.abs(v) / 5, 0, 1)), { stiffness: 200, damping: 30 })
+  const x = useMotionValue(-SPAN * PITCH) // one scroll offset: 0 puts the first day on the axis
   const [active, setActive] = useState(SPAN)
-  const startAt = useRef(SPAN)
-  const panned = useRef(false)
+  const current = useRef(SPAN)
+  const dragged = useRef(false)
 
-  useMotionValueEvent(target, "change", (v) => setActive(Math.round(v)))
-  const go = (i) => target.set(clamp(Math.round(i), 0, DAYS.length - 1))
+  const last = DAYS.length - 1
+  const snap = (value) => clamp(Math.round(-value / PITCH), 0, last)
+
+  // Every date the row passes the axis updates the selection, so the card follows the drag.
+  useMotionValueEvent(x, "change", (value) => {
+    const next = snap(value)
+    if (next !== current.current) {
+      current.current = next
+      setActive(next)
+    }
+  })
+
+  const goTo = (index) => {
+    const target = -clamp(index, 0, last) * PITCH
+    animate(x, target, { type: "spring", stiffness: 300, damping: 30 })
+  }
 
   return (
-    <motion.div
+    <div
       role="slider" tabIndex={0} aria-label="Select day"
-      aria-valuemin={0} aria-valuemax={DAYS.length - 1} aria-valuenow={active}
+      aria-valuemin={0} aria-valuemax={last} aria-valuenow={active}
       aria-valuetext={`${DAYS[active].label} ${DAYS[active].date}`}
       onKeyDown={(e) => {
-        if (e.key === "ArrowRight") go(active + 1)
-        if (e.key === "ArrowLeft") go(active - 1)
+        if (e.key === "ArrowRight") goTo(current.current + 1)
+        if (e.key === "ArrowLeft") goTo(current.current - 1)
       }}
-      // swiping anywhere on the strip spins it; releasing flings to the nearest date
-      onPanStart={() => { startAt.current = target.get(); panned.current = false }}
-      onPan={(_, { offset }) => {
-        if (Math.abs(offset.x) > 4) panned.current = true
-        target.set(clamp(startAt.current - offset.x / PITCH, -0.4, DAYS.length - 0.6))
-      }}
-      onPanEnd={(_, { velocity }) => {
-        go(target.get() - velocity.x / 600)
-        setTimeout(() => { panned.current = false }, 0)
-      }}
-      className="relative -mx-2 mb-5 h-28 cursor-grab touch-pan-y select-none overflow-hidden outline-none [perspective:800px] focus-visible:ring-2 focus-visible:ring-amber-300/70 active:cursor-grabbing">
+      className="relative -mx-2 mb-5 h-28 touch-pan-y select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70">
       {SPECKS.map(([l, t]) => (
         <i key={`${l}-${t}`} aria-hidden style={{ left: l, top: t }} className="pointer-events-none absolute size-0.5 rounded-full bg-white/50" />
       ))}
-      {DAYS.map((day, i) => (
-        <WheelDate key={i} i={i} day={day} wheel={wheel} k={k} active={i === active}
-          onSelect={(n) => !panned.current && go(n)} />
-      ))}
-    </motion.div>
+      <motion.div
+        drag="x"
+        style={{ x, cursor: "grab" }}
+        // The track is the window the row is seen through; it must not travel with the row.
+        transformTemplate={() => "none"}
+        dragConstraints={{ left: -last * PITCH, right: 0 }}
+        dragElastic={0.1}
+        // Drag inertia is projected onto the nearest date, so a flick stops on a day.
+        dragTransition={{ power: 0.2, timeConstant: 200, modifyTarget: (t) => -snap(-t) * PITCH }}
+        onPointerDown={() => { dragged.current = false }}
+        onDragStart={() => { dragged.current = true }}
+        className="absolute inset-0">
+        {DAYS.map((day, i) => (
+          <WheelDate key={i} i={i} day={day} x={x} active={i === active}
+            onSelect={(n) => !dragged.current && goTo(n)} />
+        ))}
+      </motion.div>
+    </div>
   )
 }
