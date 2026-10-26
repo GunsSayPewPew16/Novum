@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { Blend, ChevronRight, Lightbulb, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
@@ -118,6 +118,22 @@ function Placeholder({ label }) {
   )
 }
 
+// Two soft orange glows that drift slowly across the background. They stop for reduced motion.
+function AmbientGlow() {
+  const reduce = useReducedMotion()
+  const glow = "absolute rounded-full bg-[radial-gradient(closest-side,rgba(255,170,90,.6),rgba(255,120,50,0))] blur-2xl"
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <motion.div className={cn(glow, "-left-[25%] top-[6%] h-[40%] w-[95%]")}
+        animate={reduce ? undefined : { x: [0, 70, -20, 0], y: [0, 40, 12, 0] }}
+        transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }} />
+      <motion.div className={cn(glow, "-right-[30%] top-[34%] h-[36%] w-[85%]")}
+        animate={reduce ? undefined : { x: [0, -80, 25, 0], y: [0, -35, 28, 0] }}
+        transition={{ duration: 38, repeat: Infinity, ease: "easeInOut" }} />
+    </div>
+  )
+}
+
 export default function App() {
   const [tab, setTab] = useState("home")
   const [timing, setTiming] = useState(false)
@@ -133,6 +149,7 @@ export default function App() {
   return (
     <div className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-ink font-sans text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_14%_at_50%_16%,rgba(255,206,140,.9),rgba(255,150,70,.7)_40%,rgba(255,130,50,0)_100%),radial-gradient(150%_46%_at_50%_0%,#C9581F_0%,#8E3E1A_48%,rgba(18,15,13,0)_100%)]" />
+      <AmbientGlow />
       <main className="relative h-full overflow-y-auto px-3 pb-24 pt-4 [scrollbar-width:none]">
         <div className="flex flex-col gap-2">
           <Header />
