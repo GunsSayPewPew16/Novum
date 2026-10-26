@@ -50,6 +50,7 @@ function WheelDate({ i, day, x, active, onSelect }) {
   )
 }
 
+// The outer 24px of the strip fade out, so dates clipped by the margin dissolve instead of cutting off.
 export default function DateStrip() {
   const x = useMotionValue(-SPAN * PITCH) // one scroll offset: 0 puts the first day on the axis
   const [active, setActive] = useState(SPAN)
@@ -82,6 +83,7 @@ export default function DateStrip() {
         if (e.key === "ArrowRight") goTo(current.current + 1)
         if (e.key === "ArrowLeft") goTo(current.current - 1)
       }}
+      style={{ maskImage: "linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent)" }}
       className="relative mx-0 mb-5 h-28 touch-pan-y select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70">
       {SPECKS.map(([l, t]) => (
         <i key={`${l}-${t}`} aria-hidden style={{ left: l, top: t }} className="pointer-events-none absolute size-0.5 rounded-full bg-white/50" />
