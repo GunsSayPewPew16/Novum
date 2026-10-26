@@ -38,7 +38,7 @@ function DotDigit({ char }) {
 }
 
 const pad = (n) => String(n).padStart(2, "0")
-const fmt = (s) => [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60].map(pad).join(":")
+const fmt = (s) => `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}`
 
 function DotClock({ text }) {
   return (
@@ -57,14 +57,32 @@ function Wheel({ label, values, value, onChange }) {
   // Drag and wheel accumulate distance; each ~18px of travel moves the wheel by one value.
   const travel = useRef(0)
   const last = useRef(null)
+  const walk = useRef(null)
+  const current = useRef(value)
+  current.current = value
   const STEP_PX = 18
+  // One value per gesture event, so the spring animation plays for every step.
   const advance = (delta) => {
     travel.current += delta
-    while (Math.abs(travel.current) >= STEP_PX) {
-      const dir = Math.sign(travel.current)
-      travel.current -= dir * STEP_PX
-      step(dir > 0 ? -1 : 1)
+    if (Math.abs(travel.current) < STEP_PX) return
+    const dir = Math.sign(travel.current)
+    travel.current = 0
+    clearTimeout(walk.current)
+    step(dir > 0 ? -1 : 1)
+  }
+  // Clicking a far value walks to it one step at a time, the shorter way round the wheel.
+  const walkTo = (target) => {
+    clearTimeout(walk.current)
+    const tick = () => {
+      const n = values.length
+      const i = values.indexOf(current.current)
+      const t = values.indexOf(target)
+      if (i === t) return
+      const dir = (t - i + n) % n <= n / 2 ? 1 : -1
+      onChange(values[(i + dir + n) % n])
+      walk.current = setTimeout(tick, 90)
     }
+    tick()
   }
   return (
     <div className="flex flex-col items-center gap-2">
@@ -98,7 +116,7 @@ function Wheel({ label, values, value, onChange }) {
               key={v}
               type="button"
               tabIndex={-1}
-              onClick={() => onChange(v)}
+              onClick={() => walkTo(v)}
               initial={false}
               animate={{ opacity: mid ? 1 : 0.35 - Math.abs(offset) * 0.1, y: offset * 40, scale: mid ? 1.15 : 0.85 }}
               transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.8 }}
