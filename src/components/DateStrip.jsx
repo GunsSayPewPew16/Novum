@@ -82,7 +82,7 @@ export default function DateStrip() {
         if (e.key === "ArrowRight") goTo(current.current + 1)
         if (e.key === "ArrowLeft") goTo(current.current - 1)
       }}
-      className="relative -mx-2 mb-5 h-28 touch-pan-y select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70">
+      className="relative mx-0 mb-5 h-28 touch-pan-y select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70">
       {SPECKS.map(([l, t]) => (
         <i key={`${l}-${t}`} aria-hidden style={{ left: l, top: t }} className="pointer-events-none absolute size-0.5 rounded-full bg-white/50" />
       ))}

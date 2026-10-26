@@ -16,7 +16,7 @@ const TONE = { hot: "bg-gradient-to-b from-[#FFB27A] to-[#FF6A1A]", warm: "bg-[#
 
 function Header() {
   return (
-    <header className="flex h-8 items-center px-2">
+    <header className="flex h-8 items-center">
       <span className="font-serif text-[26px] font-medium italic tracking-[-0.01em]">Novum</span>
     </header>
   )
@@ -133,7 +133,7 @@ export default function App() {
   return (
     <div className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-ink font-sans text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_14%_at_50%_16%,rgba(255,206,140,.9),rgba(255,150,70,.7)_40%,rgba(255,130,50,0)_100%),radial-gradient(150%_46%_at_50%_0%,#C9581F_0%,#8E3E1A_48%,rgba(18,15,13,0)_100%)]" />
-      <main className="relative h-full overflow-y-auto px-2 pb-24 pt-4 [scrollbar-width:none]">
+      <main className="relative h-full overflow-y-auto px-3 pb-24 pt-4 [scrollbar-width:none]">
         <div className="flex flex-col gap-2">
           <Header />
           <AnimatePresence mode="wait">
