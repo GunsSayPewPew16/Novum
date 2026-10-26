@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { motion } from "framer-motion"
+import { animate, motion, useMotionValue, useTransform } from "framer-motion"
 import { ArrowLeft, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -50,9 +50,42 @@ function DotClock({ text }) {
   )
 }
 
-// A vertical wheel of values; the selected value sits in the centre and the list scrolls to it.
+const STEP_DEG = 30 // angle between neighbouring values on the drum
+const RADIUS = 96 // drum radius in px
+
+// Signed distance (in values) from the drum's front, wrapped so the short way round is used.
+const wrapDist = (i, pos, n) => ((((i - pos) % n) + n + n / 2) % n) - n / 2
+
+// One value on the drum. Every value reads the same shared position, so the whole drum turns together.
+function DialItem({ v, i, n, pos }) {
+  const transform = useTransform(pos, (p) => `rotateX(${-wrapDist(i, p, n) * STEP_DEG}deg) translateZ(${RADIUS}px)`)
+  const opacity = useTransform(pos, (p) => Math.max(0, 1 - Math.abs(wrapDist(i, p, n)) * 0.3))
+  const color = useTransform(pos, (p) => (Math.abs(wrapDist(i, p, n)) < 0.5 ? "#FF8A50" : "#ffffff"))
+  return (
+    <motion.button
+      type="button"
+      tabIndex={-1}
+      data-value={v}
+      style={{ transform, opacity, color, backfaceVisibility: "hidden" }}
+      className="absolute inset-x-0 top-1/2 -mt-5 h-10 font-serif text-[40px] font-medium italic leading-10"
+    >
+      {String(v).padStart(2, "0")}
+    </motion.button>
+  )
+}
+
+// A vertical wheel of values, drawn as a 3D drum; the selected value sits at the front.
 function Wheel({ label, values, value, onChange }) {
   const index = values.indexOf(value)
+  const n = values.length
+  const pos = useMotionValue(index)
+  // Turn the drum the shortest way to the new value, with a spring, so every step is a continuous rotation.
+  useEffect(() => {
+    const current = pos.get()
+    const delta = wrapDist(index, current, n)
+    const controls = animate(pos, current + delta, { type: "spring", stiffness: 180, damping: 26, mass: 0.9 })
+    return () => controls.stop()
+  }, [index, n, pos])
   const step = (d) => onChange(values[(index + d + values.length) % values.length])
   // Drag and wheel accumulate distance; each ~18px of travel moves the wheel by one value.
   const travel = useRef(0)
@@ -122,26 +155,15 @@ function Wheel({ label, values, value, onChange }) {
         style={{ touchAction: "none", cursor: "ns-resize" }}
         className="relative flex h-[200px] w-24 flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-amber-300/70"
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-ink/80 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-ink/80 to-transparent" />
-        {[-2, -1, 0, 1, 2].map((offset) => {
-          const v = values[(index + offset + values.length) % values.length]
-          const mid = offset === 0
-          return (
-            <motion.button
-              key={v}
-              type="button"
-              tabIndex={-1}
-              data-value={v}
-              initial={false}
-              animate={{ opacity: mid ? 1 : 0.35 - Math.abs(offset) * 0.1, y: offset * 40, scale: mid ? 1.15 : 0.85 }}
-              transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.8 }}
-              className={cn("absolute font-serif text-[40px] font-medium italic leading-none", mid ? "text-[#FF8A50]" : "text-white")}
-            >
-              {String(v).padStart(2, "0")}
-            </motion.button>
-          )
-        })}
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-ink/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-t from-ink/80 to-transparent" />
+        <div className="absolute inset-0 [perspective:360px]">
+          <div className="absolute inset-0 [transform-style:preserve-3d]">
+            {values.map((v, i) => (
+              <DialItem key={v} v={v} i={i} n={n} pos={pos} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
