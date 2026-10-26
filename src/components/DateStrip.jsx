@@ -7,8 +7,6 @@ const PITCH = 64 // px the row travels for one date
 const CURVE = 900 // radius (px) of the flat, gently curved row; large so the bend is slight
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 
-// session progress rings for the last few days, keyed by offset from today
-const PROGRESS = { "-3": 0.85, "-2": 0.22, "-1": 0.72, 0: 0.78 }
 // tiny bokeh specks [left, top] in px
 const SPECKS = [[20, 15], [90, 53], [107, 90], [134, 105], [182, 98], [223, 98], [299, 108], [305, 15], [370, 18]]
 
@@ -18,27 +16,8 @@ const DAYS = Array.from({ length: SPAN * 2 + 1 }, (_, i) => {
   return {
     date: String(dt.getDate()).padStart(2, "0"),
     label: dt.toLocaleDateString("en-US", { weekday: "short" }),
-    progress: PROGRESS[i - SPAN],
   }
 })
-
-function Ring({ p, strong }) {
-  const r = 19
-  const c = 2 * Math.PI * r
-  const base = { cx: 20, cy: 20, fill: "none", strokeLinecap: "round" }
-  return (
-    <svg aria-hidden viewBox="0 0 40 40" className="absolute inset-0 size-10">
-      {strong && (
-        <>
-          <circle {...base} r={r} stroke="rgba(255,255,255,.25)" strokeWidth={2} />
-          <circle {...base} r={15} stroke="rgba(255,255,255,.3)" strokeWidth={1} />
-        </>
-      )}
-      <circle {...base} r={r} stroke={`rgba(255,255,255,${strong ? 0.95 : 0.75})`} strokeWidth={2}
-        strokeDasharray={`${c * p} ${c}`} transform="rotate(-90 20 20)" />
-    </svg>
-  )
-}
 
 // One date. `x` is the shared scroll offset in px: each date derives its seat from it on every
 // frame, so the row follows the finger one-to-one. The row is flat in 2D, bent onto a large
@@ -56,15 +35,13 @@ function WheelDate({ i, day, x, active, onSelect }) {
     return a < 1 ? 1 - 0.4 * a : Math.max(0.45, 0.6 - 0.05 * (a - 1))
   })
   const pointerEvents = useTransform(d, (v) => (Math.abs(v) > 3.2 ? "none" : "auto"))
-  const p = day.progress
 
   return (
     <motion.button tabIndex={-1} aria-hidden onClick={() => onSelect(i)}
       style={{ x: px, y, scale, opacity, pointerEvents }}
       className="absolute left-1/2 top-3 -ml-7 flex w-14 flex-col items-center gap-3 outline-none">
-      <span className={cn("relative grid size-10 place-items-center rounded-full text-base font-medium transition-colors", p > 0.5 ? "bg-white/[0.06]" : "bg-white/[0.24]")}>
+      <span className="relative grid size-10 place-items-center rounded-full bg-white/[0.12] text-base font-medium">
         {day.date}
-        {p && <Ring p={p} strong={active} />}
       </span>
       <span className={cn("text-sm leading-[17px] transition-colors", active ? "font-semibold text-white" : "text-white/90")}>
         {day.label}
