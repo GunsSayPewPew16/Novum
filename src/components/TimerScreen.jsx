@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { ArrowLeft, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -37,10 +37,12 @@ function DotDigit({ char }) {
   )
 }
 
-function DotClock({ hours, minutes }) {
-  const text = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+const pad = (n) => String(n).padStart(2, "0")
+const fmt = (s) => [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60].map(pad).join(":")
+
+function DotClock({ text }) {
   return (
-    <div role="timer" aria-label={`${hours} hours ${minutes} minutes`} className="flex items-center justify-center gap-3">
+    <div role="timer" aria-label={text} className="flex items-center justify-center gap-3">
       {[...text].map((ch, i) => (
         <DotDigit key={i} char={ch} />
       ))}
@@ -52,6 +54,18 @@ function DotClock({ hours, minutes }) {
 function Wheel({ label, values, value, onChange }) {
   const index = values.indexOf(value)
   const step = (d) => onChange(values[(index + d + values.length) % values.length])
+  // Drag and wheel accumulate distance; each ~18px of travel moves the wheel by one value.
+  const travel = useRef(0)
+  const last = useRef(null)
+  const STEP_PX = 18
+  const advance = (delta) => {
+    travel.current += delta
+    while (Math.abs(travel.current) >= STEP_PX) {
+      const dir = Math.sign(travel.current)
+      travel.current -= dir * STEP_PX
+      step(dir > 0 ? -1 : 1)
+    }
+  }
   return (
     <div className="flex flex-col items-center gap-2">
       <span className="text-xs text-white/60">{label}</span>
@@ -66,7 +80,12 @@ function Wheel({ label, values, value, onChange }) {
           if (e.key === "ArrowUp") { e.preventDefault(); step(-1) }
           if (e.key === "ArrowDown") { e.preventDefault(); step(1) }
         }}
-        onWheel={(e) => step(e.deltaY > 0 ? 1 : -1)}
+        onWheel={(e) => advance(e.deltaY)}
+        onPointerDown={(e) => { last.current = e.clientY; e.currentTarget.setPointerCapture(e.pointerId) }}
+        onPointerMove={(e) => { if (last.current === null) return; advance(last.current - e.clientY); last.current = e.clientY }}
+        onPointerUp={() => { last.current = null; travel.current = 0 }}
+        onPointerCancel={() => { last.current = null; travel.current = 0 }}
+        style={{ touchAction: "none", cursor: "ns-resize" }}
         className="relative flex h-[200px] w-24 flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-amber-300/70"
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-ink/80 to-transparent" />
@@ -100,6 +119,25 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i)
 export default function TimerScreen({ onBack }) {
   const [hours, setHours] = useState(0)
   const [minutes, setMinutes] = useState(10)
+  // running: counting down; remaining: seconds left (null when idle, so the picker shows)
+  const [remaining, setRemaining] = useState(null)
+  const [running, setRunning] = useState(false)
+
+  useEffect(() => {
+    if (!running) return
+    const id = setInterval(() => {
+      setRemaining((s) => {
+        if (s <= 1) { setRunning(false); return 0 }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [running])
+
+  const begin = () => { setRemaining(hours * 3600 + minutes * 60); setRunning(true) }
+  const reset = () => { setRunning(false); setRemaining(null) }
+  const shown = remaining ?? hours * 3600 + minutes * 60
+  const finished = remaining === 0
 
   return (
     <section className="flex flex-col gap-2">
@@ -116,22 +154,36 @@ export default function TimerScreen({ onBack }) {
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-white/[0.05] px-4 py-8 backdrop-blur-md">
-        <h2 className="text-center font-serif text-[28px] font-medium italic leading-8 tracking-[-0.01em]">Set your focus time</h2>
-        <p className="mt-2 text-center text-xs leading-4 text-white/60">Choose hours and minutes, then start when you are ready.</p>
+        <h2 className="text-center font-serif text-[28px] font-medium italic leading-8 tracking-[-0.01em]">
+          {finished ? "Session complete" : remaining === null ? "Set your focus time" : running ? "Focus time" : "Paused"}
+        </h2>
+        <p className="mt-2 text-center text-xs leading-4 text-white/60">
+          {remaining === null ? "Scroll the wheels to choose hours and minutes." : finished ? "Reset to set a new session." : "Pause or reset whenever you need."}
+        </p>
 
         <div className="mt-8">
-          <DotClock hours={hours} minutes={minutes} />
+          <DotClock text={fmt(shown)} />
         </div>
 
-        <div className="mt-8 flex justify-center gap-4">
-          <Wheel label="Hours" values={HOURS} value={hours} onChange={setHours} />
-          <Wheel label="Minutes" values={MINUTES} value={minutes} onChange={setMinutes} />
-        </div>
+        {remaining === null && (
+          <div className="mt-8 flex justify-center gap-4">
+            <Wheel label="Hours" values={HOURS} value={hours} onChange={setHours} />
+            <Wheel label="Minutes" values={MINUTES} value={minutes} onChange={setMinutes} />
+          </div>
+        )}
 
-        <div className="mt-8 flex justify-center">
-          <Button asChild disabled={hours === 0 && minutes === 0} className="h-10 gap-2 px-6 text-[13px]">
-            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-              <Play size={14} strokeWidth={1.5} /> Begin Session
+        <div className="mt-8 flex justify-center gap-3">
+          {remaining !== null && (
+            <Button asChild variant="glass" className="h-10 px-5 text-[13px]">
+              <motion.button onClick={reset} whileTap={{ scale: 0.96 }}>Reset</motion.button>
+            </Button>
+          )}
+          <Button asChild disabled={remaining === null && hours === 0 && minutes === 0} className="h-10 gap-2 px-6 text-[13px]">
+            <motion.button
+              onClick={() => (remaining === null || finished ? begin() : setRunning((r) => !r))}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+              <Play size={14} strokeWidth={1.5} /> {remaining === null || finished ? "Start" : running ? "Pause" : "Resume"}
             </motion.button>
           </Button>
         </div>
