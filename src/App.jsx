@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Asterisk, Blend, ChevronRight, Lightbulb, Play } from "lucide-react"
+import { Blend, ChevronRight, Lightbulb, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
 import Dock, { TABS } from "@/components/Dock"
@@ -16,13 +16,8 @@ const TONE = { hot: "bg-gradient-to-b from-[#FFB27A] to-[#FF6A1A]", warm: "bg-[#
 
 function Header() {
   return (
-    <header className="flex h-8 items-center justify-between px-2">
-      <div className="flex items-center gap-2">
-        <div className="grid size-8 place-items-center rounded-full bg-white/15 shadow-[0_0_24px_rgba(255,170,90,.5)]">
-          <Asterisk size={20} strokeWidth={2} />
-        </div>
-        <span className="font-serif text-[26px] font-medium italic tracking-[-0.01em]">Novum</span>
-      </div>
+    <header className="flex h-8 items-center px-2">
+      <span className="font-serif text-[26px] font-medium italic tracking-[-0.01em]">Novum</span>
     </header>
   )
 }
