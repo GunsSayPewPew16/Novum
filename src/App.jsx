@@ -1,15 +1,17 @@
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Asterisk, Blend, ChevronRight, Lightbulb, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
 import Dock, { TABS } from "@/components/Dock"
 import TimerScreen from "@/components/TimerScreen"
+import { addFocusSecond, lastDays } from "@/lib/focusLog"
 import { cn } from "@/lib/utils"
 
 const glass = "rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,.12)]"
-// [label, fill height in px (track = 48), tone]
-const BARS = [["S", 12], ["M", 16], ["T", 6], ["W", 20], ["T", 40, "hot"], ["F", 18, "warm"], ["S", 38, "hot"]]
+// Bars scale to the busiest day in the last week; the percentage is that day's share of the peak.
+const WEEK = 7
+const TRACK = 48
 const TONE = { hot: "bg-gradient-to-b from-[#FF9A63] to-[#E0522B]", warm: "bg-[#E07846]/60" }
 
 function Header() {
@@ -60,7 +62,9 @@ function Hero({ onStart }) {
   )
 }
 
-function Energy() {
+function Energy({ days }) {
+  const peak = Math.max(...days.map((d) => d.seconds), 1)
+  const percent = Math.round((days[days.length - 1].seconds / peak) * 100)
   return (
     <section className={cn(glass, "relative h-36")}>
       <div className="absolute inset-x-4 top-4 flex items-center gap-2">
@@ -70,15 +74,15 @@ function Energy() {
         <h3 className="text-[13px] font-medium text-white/60">Energy Forecast</h3>
         <ChevronRight size={16} strokeWidth={1.5} className="ml-auto mr-2 text-white/60" />
       </div>
-      <p className="absolute bottom-4 left-4 text-[40px] font-normal leading-[48px] tracking-[-0.03em]">78%</p>
+      <p className="absolute bottom-4 left-4 text-[40px] font-normal leading-[48px] tracking-[-0.03em]">{percent}%</p>
       <div className="absolute bottom-4 right-4 flex gap-4" role="img" aria-label="Weekly energy distribution">
-        {BARS.map(([d, h, tone], i) => (
+        {days.map(({ label, seconds }, i) => (
           <div key={i} className="flex flex-col items-center gap-1.5 text-[10px] font-semibold leading-3 text-white/60">
             <div className="flex h-12 w-2 items-end overflow-hidden rounded-full bg-white/[0.07]">
-              <motion.i initial={{ height: 0 }} animate={{ height: h }} transition={{ delay: i * 0.05, duration: 0.6, ease: "easeOut" }}
-                className={cn("w-full rounded-full", TONE[tone] ?? "bg-white/20")} />
+              <motion.i initial={{ height: 0 }} animate={{ height: (seconds / peak) * TRACK }} transition={{ delay: i * 0.05, duration: 0.6, ease: "easeOut" }}
+                className={cn("w-full rounded-full", i === days.length - 1 ? TONE.hot : TONE.warm)} />
             </div>
-            {d}
+            {label}
           </div>
         ))}
       </div>
@@ -116,6 +120,14 @@ function Placeholder({ label }) {
 export default function App() {
   const [tab, setTab] = useState("home")
   const [timing, setTiming] = useState(false)
+  const [days, setDays] = useState(() => lastDays(WEEK))
+  // Each running second adds to today's total; the bars refresh every 5 seconds so they track the timer.
+  const onTick = useCallback(() => addFocusSecond(), [])
+  useEffect(() => {
+    if (!timing) return
+    const id = setInterval(() => setDays(lastDays(WEEK)), 5000)
+    return () => clearInterval(id)
+  }, [timing])
   return (
     <div className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-ink font-sans text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_14%_at_50%_16%,rgba(255,206,140,.9),rgba(255,150,70,.7)_40%,rgba(255,130,50,0)_100%),radial-gradient(150%_46%_at_50%_0%,#C9581F_0%,#8E3E1A_48%,rgba(18,15,13,0)_100%)]" />
@@ -128,8 +140,8 @@ export default function App() {
               {tab === "home" ? (
                 <>
                   {!timing && <DateStrip />}
-                  {timing ? <TimerScreen onBack={() => setTiming(false)} /> : <Hero onStart={() => setTiming(true)} />}
-                  {!timing && <Energy />}
+                  {timing ? <TimerScreen onBack={() => { setTiming(false); setDays(lastDays(WEEK)) }} onTick={onTick} /> : <Hero onStart={() => setTiming(true)} />}
+                  {!timing && <Energy days={days} />}
                   {!timing && <Metrics />}
                 </>
               ) : (

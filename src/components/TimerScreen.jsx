@@ -172,7 +172,10 @@ function Wheel({ label, values, value, onChange }) {
 const HOURS = Array.from({ length: 12 }, (_, i) => i)
 const MINUTES = Array.from({ length: 60 }, (_, i) => i)
 
-export default function TimerScreen({ onBack }) {
+export default function TimerScreen({ onBack, onTick }) {
+  // The countdown reports each running second through the latest onTick, without restarting the interval.
+  const tick = useRef(onTick)
+  tick.current = onTick
   const [hours, setHours] = useState(0)
   const [minutes, setMinutes] = useState(10)
   // running: counting down; remaining: seconds left (null when idle, so the picker shows)
@@ -182,6 +185,7 @@ export default function TimerScreen({ onBack }) {
   useEffect(() => {
     if (!running) return
     const id = setInterval(() => {
+      tick.current?.()
       setRemaining((s) => {
         if (s <= 1) { setRunning(false); return 0 }
         return s - 1
