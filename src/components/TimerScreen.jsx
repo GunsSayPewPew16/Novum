@@ -76,13 +76,13 @@ function Wheel({ label, values, value, onChange }) {
           const mid = offset === 0
           return (
             <motion.button
-              key={`${offset}-${v}`}
+              key={v}
               type="button"
               tabIndex={-1}
               onClick={() => onChange(v)}
-              initial={{ opacity: 0, y: offset * 12 }}
+              initial={false}
               animate={{ opacity: mid ? 1 : 0.35 - Math.abs(offset) * 0.1, y: offset * 40, scale: mid ? 1.15 : 0.85 }}
-              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.8 }}
               className={cn("absolute font-serif text-[40px] font-medium italic leading-none", mid ? "text-[#FF8A50]" : "text-white")}
             >
               {String(v).padStart(2, "0")}

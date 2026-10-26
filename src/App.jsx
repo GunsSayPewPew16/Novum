@@ -127,7 +127,7 @@ export default function App() {
               transition={{ duration: 0.24 }} className="flex flex-col gap-2">
               {tab === "home" ? (
                 <>
-                  <DateStrip />
+                  {!timing && <DateStrip />}
                   {timing ? <TimerScreen onBack={() => setTiming(false)} /> : <Hero onStart={() => setTiming(true)} />}
                   {!timing && <Energy />}
                   {!timing && <Metrics />}
