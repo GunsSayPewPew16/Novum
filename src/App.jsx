@@ -12,7 +12,7 @@ const glass = "rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-
 // Bars scale to the busiest day in the last week; the percentage is that day's share of the peak.
 const WEEK = 7
 const TRACK = 48
-const TONE = { hot: "bg-gradient-to-b from-[#FF9A63] to-[#E0522B]", warm: "bg-[#E07846]/60" }
+const TONE = { hot: "bg-gradient-to-b from-[#FFB27A] to-[#FF6A1A]", warm: "bg-[#FF7A33]/75" }
 
 function Header() {
   return (
@@ -71,7 +71,7 @@ function Energy({ days }) {
         <span className="grid size-8 place-items-center rounded-full bg-white/[0.08] text-white/75">
           <Blend size={16} strokeWidth={1.5} />
         </span>
-        <h3 className="text-[13px] font-medium text-white/60">Energy Forecast</h3>
+        <h3 className="text-[13px] font-medium text-white/60">Study Stats</h3>
         <ChevronRight size={16} strokeWidth={1.5} className="ml-auto mr-2 text-white/60" />
       </div>
       <p className="absolute bottom-4 left-4 text-[40px] font-normal leading-[48px] tracking-[-0.03em]">{percent}%</p>
