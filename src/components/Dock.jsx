@@ -1,7 +1,6 @@
 import * as Tabs from "@radix-ui/react-tabs"
 import { motion } from "framer-motion"
 import { House, Star, Asterisk, Target, User } from "@coolicons/react"
-import { LiquidGlass } from "liquid-glass-web-react"
 import { cn } from "@/lib/utils"
 
 export const TABS = [
@@ -16,7 +15,6 @@ const spring = { type: "spring", stiffness: 420, damping: 32 }
 export default function Dock({ value, onChange }) {
   return (
     <Tabs.Root value={value} onValueChange={onChange} className="absolute inset-x-2 bottom-3">
-      <LiquidGlass radius={24} strength={0.12} className="h-[72px] w-full overflow-hidden rounded-3xl">
       <Tabs.List aria-label="Primary" className="flex h-[72px] items-center justify-between rounded-3xl border border-white/10 bg-white/[0.05] px-[18px] backdrop-blur-xl">
         {TABS.map(({ id, label, icon: Icon, center, fill }) => {
           const on = value === id
@@ -42,7 +40,6 @@ export default function Dock({ value, onChange }) {
           )
         })}
       </Tabs.List>
-      </LiquidGlass>
     </Tabs.Root>
   )
 }

@@ -7,7 +7,7 @@ import Dock, { TABS } from "@/components/Dock"
 import TimerScreen from "@/components/TimerScreen"
 import { cn } from "@/lib/utils"
 
-const glass = "rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-md"
+const glass = "rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,.12)]"
 // [label, fill height in px (track = 48), tone]
 const BARS = [["S", 12], ["M", 16], ["T", 6], ["W", 20], ["T", 40, "hot"], ["F", 18, "warm"], ["S", 38, "hot"]]
 const TONE = { hot: "bg-gradient-to-b from-[#FF9A63] to-[#E0522B]", warm: "bg-[#E07846]/60" }
