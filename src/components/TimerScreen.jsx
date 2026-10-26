@@ -58,6 +58,8 @@ function Wheel({ label, values, value, onChange }) {
   const travel = useRef(0)
   const last = useRef(null)
   const walk = useRef(null)
+  // A press that moves little is a tap: it walks to the value under the pointer on release.
+  const press = useRef({ moved: 0, target: null })
   const current = useRef(value)
   current.current = value
   const STEP_PX = 18
@@ -99,9 +101,23 @@ function Wheel({ label, values, value, onChange }) {
           if (e.key === "ArrowDown") { e.preventDefault(); step(1) }
         }}
         onWheel={(e) => advance(e.deltaY)}
-        onPointerDown={(e) => { last.current = e.clientY; e.currentTarget.setPointerCapture(e.pointerId) }}
-        onPointerMove={(e) => { if (last.current === null) return; advance(last.current - e.clientY); last.current = e.clientY }}
-        onPointerUp={() => { last.current = null; travel.current = 0 }}
+        onPointerDown={(e) => {
+          last.current = e.clientY
+          press.current = { moved: 0, target: e.target.closest("[data-value]")?.dataset.value ?? null }
+          e.currentTarget.setPointerCapture(e.pointerId)
+        }}
+        onPointerMove={(e) => {
+          if (last.current === null) return
+          press.current.moved += Math.abs(e.clientY - last.current)
+          advance(last.current - e.clientY)
+          last.current = e.clientY
+        }}
+        onPointerUp={() => {
+          const { moved, target } = press.current
+          if (last.current !== null && moved < 6 && target !== null) walkTo(Number(target))
+          last.current = null
+          travel.current = 0
+        }}
         onPointerCancel={() => { last.current = null; travel.current = 0 }}
         style={{ touchAction: "none", cursor: "ns-resize" }}
         className="relative flex h-[200px] w-24 flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] outline-none backdrop-blur-md focus-visible:ring-2 focus-visible:ring-amber-300/70"
@@ -116,7 +132,7 @@ function Wheel({ label, values, value, onChange }) {
               key={v}
               type="button"
               tabIndex={-1}
-              onClick={() => walkTo(v)}
+              data-value={v}
               initial={false}
               animate={{ opacity: mid ? 1 : 0.35 - Math.abs(offset) * 0.1, y: offset * 40, scale: mid ? 1.15 : 0.85 }}
               transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.8 }}
