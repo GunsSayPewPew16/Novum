@@ -4,6 +4,7 @@ import { Asterisk, Blend, ChevronRight, Lightbulb, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
 import Dock, { TABS } from "@/components/Dock"
+import TimerScreen from "@/components/TimerScreen"
 import { cn } from "@/lib/utils"
 
 const glass = "rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-md"
@@ -30,7 +31,7 @@ const Meta = ({ icon: Icon, children }) => (
   </span>
 )
 
-function Hero() {
+function Hero({ onStart }) {
   return (
     <section className={cn(glass, "relative isolate h-[280px] overflow-hidden bg-gradient-to-b from-orange-500/[0.12] via-ink/55 to-ink/85")}>
       <div aria-hidden className="absolute inset-x-0 top-6 -z-10 flex justify-center blur-[6px]">
@@ -50,7 +51,7 @@ function Hero() {
           <Meta icon={Lightbulb}>Guided</Meta>
         </div>
         <Button asChild className="mt-4 h-10 gap-2 px-6 text-[13px]">
-          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
+          <motion.button onClick={onStart} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
             <Play size={14} strokeWidth={1.5} /> Start Timer
           </motion.button>
         </Button>
@@ -114,6 +115,7 @@ function Placeholder({ label }) {
 
 export default function App() {
   const [tab, setTab] = useState("home")
+  const [timing, setTiming] = useState(false)
   return (
     <div className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-ink font-sans text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_14%_at_50%_16%,rgba(255,206,140,.9),rgba(255,150,70,.7)_40%,rgba(255,130,50,0)_100%),radial-gradient(150%_46%_at_50%_0%,#C9581F_0%,#8E3E1A_48%,rgba(18,15,13,0)_100%)]" />
@@ -126,9 +128,9 @@ export default function App() {
               {tab === "home" ? (
                 <>
                   <DateStrip />
-                  <Hero />
-                  <Energy />
-                  <Metrics />
+                  {timing ? <TimerScreen onBack={() => setTiming(false)} /> : <Hero onStart={() => setTiming(true)} />}
+                  {!timing && <Energy />}
+                  {!timing && <Metrics />}
                 </>
               ) : (
                 <Placeholder label={TABS.find((t) => t.id === tab).label} />
