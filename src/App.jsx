@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
 import Dock, { TABS } from "@/components/Dock"
 import TimerScreen from "@/components/TimerScreen"
-import { addFocusSecond, lastDays } from "@/lib/focusLog"
+import { addFocusSecond, lastDays, monthAverage, seedTestData } from "@/lib/focusLog"
 import { cn } from "@/lib/utils"
 
 const glass = "rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,.12)]"
@@ -90,7 +90,13 @@ function Energy({ days }) {
   )
 }
 
-function Metrics() {
+// Average session length in minutes, from the 1st of this month through today.
+const formatAverage = (seconds) => {
+  const m = Math.round(seconds / 60)
+  return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`
+}
+
+function Metrics({ average }) {
   const Cell = ({ value, label }) => (
     <div className="flex flex-col items-center gap-1">
       <b className="text-base font-medium leading-5">{value}</b>
@@ -99,7 +105,7 @@ function Metrics() {
   )
   return (
     <section className={cn(glass, "grid h-16 grid-cols-3 items-center")}>
-      <Cell value="9 minutes" label="Average session" />
+      <Cell value={formatAverage(average)} label="Average session" />
       <Cell value="Calm" label="Current mood" />
       <Cell value={<><span className="text-[#FF8A50]">8:30</span> <span className="text-xs font-normal text-white/60">PM</span></>} label="Meditation Time" />
     </section>
@@ -121,11 +127,12 @@ export default function App() {
   const [tab, setTab] = useState("home")
   const [timing, setTiming] = useState(false)
   const [days, setDays] = useState(() => lastDays(WEEK))
+  const [average, setAverage] = useState(() => monthAverage())
   // Each running second adds to today's total; the bars refresh every 5 seconds so they track the timer.
   const onTick = useCallback(() => addFocusSecond(), [])
   useEffect(() => {
     if (!timing) return
-    const id = setInterval(() => setDays(lastDays(WEEK)), 5000)
+    const id = setInterval(() => { setDays(lastDays(WEEK)); setAverage(monthAverage()) }, 5000)
     return () => clearInterval(id)
   }, [timing])
   return (
@@ -140,9 +147,9 @@ export default function App() {
               {tab === "home" ? (
                 <>
                   {!timing && <DateStrip />}
-                  {timing ? <TimerScreen onBack={() => { setTiming(false); setDays(lastDays(WEEK)) }} onTick={onTick} /> : <Hero onStart={() => setTiming(true)} />}
+                  {timing ? <TimerScreen onBack={() => { setTiming(false); setDays(lastDays(WEEK)); setAverage(monthAverage()) }} onTick={onTick} /> : <Hero onStart={() => setTiming(true)} />}
                   {!timing && <Energy days={days} />}
-                  {!timing && <Metrics />}
+                  {!timing && <Metrics average={average} />}
                 </>
               ) : (
                 <Placeholder label={TABS.find((t) => t.id === tab).label} />
