@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import DateStrip from "@/components/DateStrip"
 import Dock, { TABS } from "@/components/Dock"
 import TimerScreen from "@/components/TimerScreen"
+import SubjectsScreen from "@/components/SubjectsScreen"
 import { addFocusSecond, lastDays, monthAverage, seedTestData } from "@/lib/focusLog"
 import { cn } from "@/lib/utils"
 
@@ -163,6 +164,8 @@ export default function App() {
                   {!timing && <Energy days={days} />}
                   {!timing && <Metrics average={average} />}
                 </>
+              ) : tab === "session" ? (
+                <SubjectsScreen />
               ) : (
                 <Placeholder label={TABS.find((t) => t.id === tab).label} />
               )}
