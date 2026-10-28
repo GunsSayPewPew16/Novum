@@ -37,17 +37,16 @@ function SubjectList({ subjects, onAdd, onOpen }) {
 function AddSubject({ onBack, onSave }) {
   const [name, setName] = useState("")
   const [file, setFile] = useState(null)
-  const [apiKey, setApiKey] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
   const submit = async (event) => {
     event.preventDefault()
     setError("")
-    if (!name.trim() || !file || !apiKey.trim()) { setError("Enter a subject name and API key, and choose a syllabus PDF."); return }
+    if (!name.trim() || !file) { setError("Enter a subject name and choose a syllabus PDF."); return }
     if (!file.name.toLowerCase().endsWith(".pdf") || file.size === 0 || file.size > MAX_PDF_BYTES) { setError("Choose a non-empty PDF no larger than 3 MB."); return }
     setBusy(true)
     try {
-      const modules = await analyzeSyllabus(file, apiKey.trim())
+      const modules = await analyzeSyllabus(file)
       onSave({ id: crypto.randomUUID(), name: name.trim(), modules })
     } catch (err) {
       setError(err.message || "Could not create the checklist. Please try again.")
@@ -63,10 +62,6 @@ function AddSubject({ onBack, onSave }) {
       <label className="flex flex-col gap-2 text-sm font-medium">Syllabus PDF
         <span className="flex min-h-24 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-white/25 bg-black/10 px-4 py-4 text-center text-white/75"><FileText size={23} className="text-orange-200" aria-hidden="true" /><span className="max-w-full break-all text-sm">{file ? file.name : "Choose a PDF"}</span><span className="text-xs text-white/60">Maximum 3 MB</span></span>
         <input type="file" accept="application/pdf,.pdf" required onChange={(e) => setFile(e.target.files?.[0] || null)} className={cn(focus, "block w-full text-xs text-white/70 file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-white")} />
-      </label>
-      <label className="flex flex-col gap-2 text-sm font-medium">Gemini API key
-        <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} required autoComplete="off" placeholder="Paste your API key" className={cn(focus, "h-12 rounded-xl border border-white/15 bg-black/20 px-4 text-base text-white placeholder:text-white/40")} />
-        <span className="text-xs font-normal leading-5 text-white/70">Get a free-tier key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-orange-200 underline">Google AI Studio</a>. Your key is used only for this request and is not saved.</span>
       </label>
       <p className="text-xs leading-5 text-white/70">Your PDF is sent to Google Gemini for analysis. Google may use free-tier content to improve its products. The checklist is saved in this browser; the PDF is not stored.</p>
       {error && <p role="alert" className="rounded-xl bg-red-400/10 px-3 py-2 text-sm text-red-100">{error}</p>}
